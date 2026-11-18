@@ -1,0 +1,22 @@
+flowchart LR
+    User[Dog owner] --> UI[Desktop UI]
+    UI --> Core[Application core]
+
+    Core --> Profiles[Profiles and consent]
+    Core --> Sessions[Video sessions]
+    Core --> Reports[Reports and export]
+
+    Sessions --> Storage[(Local video storage)]
+    Core --> DB[(Local database)]
+
+    Core -->|Analysis request| Worker[ML worker]
+    Storage -->|Video frames| Worker
+
+    Worker --> Pose[Pose estimation]
+    Pose --> Features[Movement and pose features]
+    Features --> Classifier[Behaviour classifier]
+
+    Classifier -->|Events, timestamps, confidence| Core
+    Core --> Timeline[Behaviour timeline]
+    Timeline --> UI
+    Reports --> UI
