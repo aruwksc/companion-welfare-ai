@@ -1,2 +1,7 @@
 ml/models/**/*.pth
 ml/models/**/*.onnx
+.venv-build/
+build/
+dist/
+__pycache__/
+*.py[cod]
