@@ -1,22 +1,55 @@
 flowchart LR
-    User[Dog owner] --> UI[Desktop UI]
-    UI --> Core[Application core]
+    Owner[Dog owner]
+    Video[Consented video or optional webcam]
 
-    Core --> Profiles[Profiles and consent]
-    Core --> Sessions[Video sessions]
-    Core --> Reports[Reports and export]
+    subgraph Device[User device — local privacy boundary]
+        direction LR
+        ModelPkg[Versioned model package]
 
-    Sessions --> Storage[(Local video storage)]
-    Core --> DB[(Local database)]
+        subgraph UI[Desktop UI — D1 open]
+            direction TB
+            Screens[Profiles and consent<br/>Video player and timeline<br/>Report preview and export]
+        end
 
-    Core -->|Analysis request| Worker[ML worker]
-    Storage -->|Video frames| Worker
+        subgraph Core[Application core]
+            direction TB
+            API[Application API]
+            Services[Media, sessions, reports<br/>Analysis orchestration]
+            Repo[Repository]
+            DB[(Local database — D4 open)]
+            VideoStore[(Local video storage)]
+        end
 
-    Worker --> Pose[Pose estimation]
-    Pose --> Features[Movement and pose features]
-    Features --> Classifier[Behaviour classifier]
+        subgraph Worker[Separate local ML worker]
+            direction TB
+            Sampler[Frame sampler]
+            Pose[PosePort adapter]
+            Tracker[Tracking and smoothing]
+            Features[Temporal feature extraction]
+            Classifier[Behaviour classifier]
+        end
+    end
 
-    Classifier -->|Events, timestamps, confidence| Core
-    Core --> Timeline[Behaviour timeline]
-    Timeline --> UI
-    Reports --> UI
+    Owner --> Screens
+    Video -->|import locally| Screens
+    Screens <--> API
+    API --> Services
+    Services --> Repo
+    Repo <--> DB
+    Services --> VideoStore
+    Services -->|analysis request| Sampler
+    VideoStore -->|local frames| Sampler
+    ModelPkg -. verified locally .-> Pose
+    Sampler --> Pose --> Tracker --> Features --> Classifier
+    Classifier -->|events, intervals, confidence, model version| Services
+
+    classDef default fill:#ffffff,stroke:#222222,color:#111111,stroke-width:1.5px;
+    classDef boundary fill:#ffffff,stroke:#111111,color:#111111,stroke-width:2px,stroke-dasharray:6 4;
+    classDef component fill:#f7f7f7,stroke:#222222,color:#111111,stroke-width:1.5px;
+    classDef storage fill:#eeeeee,stroke:#222222,color:#111111,stroke-width:1.5px;
+    class Owner,Video,Screens,API,Services,Repo,Sampler,Pose,Tracker,Features,Classifier component;
+    class ModelPkg,DB,VideoStore storage;
+    style Device fill:#ffffff,stroke:#111111,stroke-width:2px,stroke-dasharray:6 4;
+    style UI fill:#ffffff,stroke:#333333,stroke-width:1.5px;
+    style Core fill:#ffffff,stroke:#333333,stroke-width:1.5px;
+    style Worker fill:#ffffff,stroke:#333333,stroke-width:1.5px;
