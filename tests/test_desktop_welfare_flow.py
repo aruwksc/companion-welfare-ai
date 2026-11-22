@@ -114,5 +114,5 @@ def test_ui_mainwindow_smoke_and_report_banner(qapp: QApplication, tmp_path: Pat
         data_dir=tmp_path / "ui_store",
     )
     win = MainWindow(service=svc)
-    assert NON_DIAGNOSTIC_NOTICE in win.report_preview.toPlainText()
+    assert NON_DIAGNOSTIC_NOTICE.strip() in win.report_preview.toPlainText()
     win.close()
