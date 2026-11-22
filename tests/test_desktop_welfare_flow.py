@@ -45,19 +45,23 @@ def test_sys01_sys02_sys03_consent_import_and_local_analysis(tmp_path: Path) -> 
     dog = svc.create_dog("Rex", "Mix")
     assert dog.id is not None
 
-    # SYS-02: analysis without owner consent must be blocked
-    asset = svc.import_video(dog.id, video_path)
-    assert asset.id is not None
-    assert Path(asset.stored_path).exists()
-
-    with pytest.raises(PermissionError):
-        svc.run_analysis(dog.id, asset.id)
-
-    # SYS-01 & SYS-03: record consent and run offline analysis
+    # SYS-01: record owner consent and import local video
     consent = svc.set_consent(dog.id, "Aidana", granted=True)
     assert consent.granted is True
     assert svc.has_consent(dog.id) is True
 
+    asset = svc.import_video(dog.id, video_path)
+    assert asset.id is not None
+    assert Path(asset.stored_path).exists()
+
+    # SYS-02: revoking/missing active consent blocks analysis
+    svc.set_consent(dog.id, "Aidana", granted=False)
+    assert svc.has_consent(dog.id) is False
+    with pytest.raises(PermissionError):
+        svc.run_analysis(dog.id, asset.id)
+
+    # SYS-03: restore consent and run offline analysis
+    svc.set_consent(dog.id, "Aidana", granted=True)
     session, events = svc.run_analysis(dog.id, asset.id)
     assert session.id is not None
     assert session.status == "completed"
